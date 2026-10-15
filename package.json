@@ -5,7 +5,6 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
       "default": "./src/index.mjs"
     }
   },
@@ -15,5 +14,6 @@
   ],
   "engines": {
     "node": ">=24"
-  }
+  },
+  "private": false
 }
