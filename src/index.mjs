@@ -11,7 +11,7 @@ function text(path, value) {
 
 function decimal(path, value, { nullable = false } = {}) {
   if (nullable && value === null) return null;
-  if (typeof value !== "string" || !/^(?:0|[1-9]\d*)(?:\.\d+)?$/u.test(value)) {
+  if (typeof value !== "string" || value.length > 256 || !/^(?:0|[1-9]\d*)(?:\.\d+)?$/u.test(value)) {
     throw new TypeError(`opportunity: ${path} must be a non-negative decimal string`);
   }
   return value;
@@ -35,6 +35,28 @@ function record(path, value) {
  * Preserve comparable economics, capacity, changed risks, exit, and freshness
  * for a candidate discovered by a chain-specific observer.
  */
+/** Retain a detached, immutable JSON-like evidence snapshot. External observers may
+ * reuse/mutate their transport buffers; a finance observation cannot mutate
+ * after acceptance, even several object levels inside an RPC proof. */
+function immutableEvidence(path, value, ancestors = new Set()) {
+  if (value === null || typeof value === "string" || typeof value === "boolean") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "object" || ancestors.has(value)) {
+    throw new TypeError("opportunity: " + path + " must be finite, acyclic JSON data");
+  }
+  const proto = Object.getPrototypeOf(value);
+  if (!Array.isArray(value) && proto !== Object.prototype && proto !== null) {
+    throw new TypeError("opportunity: " + path + " must be a plain evidence record");
+  }
+  ancestors.add(value);
+  const result = Array.isArray(value)
+    ? value.map((entry, i) => immutableEvidence(path + "[" + i + "]", entry, ancestors))
+    : Object.fromEntries(Object.entries(value).map(([key, entry]) =>
+        [key, immutableEvidence(path + "." + key, entry, ancestors)]));
+  ancestors.delete(value);
+  return Object.freeze(result);
+}
+
 export function normalizeEarningOpportunity(candidate) {
   const value = record("candidate", candidate);
   const apy = record("candidate.apy", value.apy);
@@ -76,8 +98,8 @@ export function normalizeEarningOpportunity(candidate) {
     }),
     liquidity: Object.freeze({
       kind: text("candidate.liquidity.kind", liquidity.kind),
-      capacity: Object.freeze(record("candidate.liquidity.capacity", liquidity.capacity)),
-      accountAvailable: Object.freeze(record("candidate.liquidity.accountAvailable", liquidity.accountAvailable)),
+      capacity: immutableEvidence("candidate.liquidity.capacity", record("candidate.liquidity.capacity", liquidity.capacity)),
+      accountAvailable: immutableEvidence("candidate.liquidity.accountAvailable", record("candidate.liquidity.accountAvailable", liquidity.accountAvailable)),
     }),
     changedRisks: stringList("candidate.changedRisks", value.changedRisks),
     exit: Object.freeze({
@@ -87,9 +109,11 @@ export function normalizeEarningOpportunity(candidate) {
     }),
     freshness: Object.freeze({
       observedAt: observedAt.toISOString(),
-      chainBoundary: Object.freeze(record("candidate.freshness.chainBoundary", freshness.chainBoundary)),
+      chainBoundary: immutableEvidence("candidate.freshness.chainBoundary", record("candidate.freshness.chainBoundary", freshness.chainBoundary)),
       provenance: Object.freeze(freshness.provenance.map((entry, index) =>
-        Object.freeze(record(`candidate.freshness.provenance[${index}]`, entry)))),
+        immutableEvidence(`candidate.freshness.provenance[${index}]`, record(`candidate.freshness.provenance[${index}]`, entry)))),
     }),
   });
 }
+
+export { studyEarningOpportunityChanges } from "./changes.mjs";

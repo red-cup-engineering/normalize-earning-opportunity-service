@@ -1,19 +1,30 @@
 {
   "name": "@red-cup-engineering/normalize-earning-opportunity-service",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Validates and freezes comparable, provenance-bearing earning observations without proposing an action.",
   "type": "module",
   "exports": {
     ".": {
       "default": "./src/index.mjs"
+    },
+    "./changes": {
+      "default": "./src/changes.mjs"
     }
   },
   "files": [
     "src",
+    "bin",
     "package.json"
   ],
   "engines": {
     "node": ">=24"
   },
-  "private": false
+  "private": false,
+  "bin": {
+    "study-earning-opportunities": "bin/study-earning-opportunities.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "study:earning": "node bin/study-earning-opportunities.mjs"
+  }
 }
