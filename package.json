@@ -2,6 +2,11 @@
   "name": "@red-cup-engineering/normalize-earning-opportunity-service",
   "version": "0.1.2",
   "description": "Validates and freezes comparable, provenance-bearing earning observations without proposing an action.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/red-cup-engineering/financial-engineering-services-section.git",
+    "directory": "services/normalize-earning-opportunity-service"
+  },
   "type": "module",
   "exports": {
     ".": {
