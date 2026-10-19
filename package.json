@@ -4,8 +4,7 @@
   "description": "Validates and freezes comparable, provenance-bearing earning observations without proposing an action.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/red-cup-engineering/financial-engineering-services-section.git",
-    "directory": "services/normalize-earning-opportunity-service"
+    "url": "git+https://github.com/red-cup-engineering/normalize-earning-opportunity-service.git"
   },
   "type": "module",
   "exports": {
